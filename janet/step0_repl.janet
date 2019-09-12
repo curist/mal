@@ -8,15 +8,9 @@
       EVAL
       PRINT))
 
-(defn puts [s]
-  (:write stdout s)
-  (:flush stdout))
+(while true
+  (:write stdout "user> ")
+  (def line (:read stdin :line))
+  (if (nil? line) (break))
+  (:write stdout (rep line)))
 
-(defn main []
-  (while true
-    (puts "user> ")
-    (def line (getline))
-    (if (empty? line) (break))
-    (puts (rep line))))
-
-(main)
