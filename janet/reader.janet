@@ -21,8 +21,15 @@
 # ;.*: Captures any sequence of characters starting with ; (tokenized).
 #
 # [^\s\[\]{}('"`,;)]*: Captures a sequence of zero or more non special characters (e.g. symbols, numbers, "true", "false", and "nil") and is sort of the inverse of the one above that captures special characters (tokenized).
+
+(defn t
+  "capture and tag a pattern"
+  [pat &opt tag]
+  (default tag pat)
+  ~(<- (* ,pat (constant ,tag))))
+
 (def mal-token
-  '{:whitespace (set " \t\n\r")
+  ~{:whitespace (set " \t\n\r")
     :dontcare (+ :whitespace ",")
     :special-double (* "~@")
     :special-single (set "[]{}()'`~^@")
@@ -35,11 +42,12 @@
                             :whitespace)
                    1))
     :value (* (any :dontcare)
-              (any (<- (+ :special-double
-                          :special-single
-                          :maybe-string
-                          :comment
-                          :common))))
+              (any (+ (<- :special-double)
+                      (<- :special-single)
+                      (<- :maybe-string)
+                      ,(t :comment)
+                      (<- :common)
+                      )))
     :main (any :value)
     })
 
@@ -77,6 +85,10 @@
        (def tok (:peek reader))
        (cond
          (nil? tok) (error 'EOF)
+         (= :comment tok) (do
+                            (:next reader)
+                            (:next reader)
+                            'nil)
          (parens tok) (read_list reader)
          (read_atom reader))))
 
