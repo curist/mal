@@ -53,13 +53,21 @@
 
 (var read_form nil)
 
+(def parens
+  {"(" ")"
+   "[" "]"
+   "{" "}"})
+
 (defn read_list [reader]
   (def result @[])
-  # skip '('
-  (:next reader)
-  (loop [t :iterate (read_form reader) :until (= ")" t)]
+  (def p (parens (:next reader)))
+  (loop [t :iterate (read_form reader) :until (= p t)]
     (array/push result t))
-  result)
+  {:type (case p
+           ")" :list
+           "]" :vector
+           "}" :hash-map)
+   :value result})
 
 (defn read_atom [reader]
   (:next reader))
@@ -69,7 +77,7 @@
        (def tok (:peek reader))
        (cond
          (nil? tok) (error 'EOF)
-         (= (tok 0) ("(" 0)) (read_list reader)
+         (parens tok) (read_list reader)
          (read_atom reader))))
 
 (defn read_str [s]
