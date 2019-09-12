@@ -88,7 +88,7 @@
          (= :comment tok) (do
                             (:next reader)
                             (:next reader)
-                            'nil)
+                            {:type :nil})
          (parens tok) (read_list reader)
          (read_atom reader))))
 
