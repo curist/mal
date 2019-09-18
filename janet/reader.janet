@@ -3,10 +3,12 @@
     :pos 0
     :next (fn [self]
             (def t (:peek self))
-            (if (nil? t) (error "no more tokens"))
-            (update self :pos inc)
+            (if (nil? (t :tok)) (error "no more tokens"))
+            (update self :pos |(+ $ 2))
             t)
-    :peek (fn [self] (get-in self [:tokens (self :pos)]))})
+    :peek (fn [self]
+            {:type (get-in self [:tokens (self :pos)])
+             :tok (get-in self [:tokens (inc (self :pos))])})})
 
 # [\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"?|;.*|[^\s\[\]{}('"`,;)]*)
 
@@ -32,6 +34,7 @@
   ~{:whitespace (set " \t\n\r")
     :dontcare (+ :whitespace ",")
     :special-double (* "~@")
+    :open-paren (set "([{")
     :special-single (set "[]{}()'`~^@")
     :maybe-string (* "\""
                      (any (+ (* "\\" 1)
@@ -42,11 +45,12 @@
                             :whitespace)
                    1))
     :value (* (any :dontcare)
-              (any (+ (<- :special-double)
-                      (<- :special-single)
-                      (<- :maybe-string)
+              (any (+ ,(t :special-double)
+                      ,(t :open-paren)
+                      ,(t :special-single)
+                      ,(t :maybe-string)
                       ,(t :comment)
-                      (<- :common)
+                      ,(t :common)
                       )))
     :main (any :value)
     })
@@ -68,7 +72,8 @@
 
 (defn read_list [reader]
   (def result @[])
-  (def p (parens (:next reader)))
+  (def t (:next reader))
+  (def p (parens (t :tok)))
   (loop [t :iterate (read_form reader) :until (= p t)]
     (array/push result t))
   {:type (case p
@@ -78,19 +83,18 @@
    :value result})
 
 (defn read_atom [reader]
-  (:next reader))
+  (def t (:next reader))
+  (t :tok))
 
 (set read_form
      (fn read_form [reader]
        (def tok (:peek reader))
-       (cond
-         (nil? tok) (error 'EOF)
-         (= :comment tok) (do
-                            (:next reader)
-                            (:next reader)
-                            {:type :nil})
-         (parens tok) (read_list reader)
-         (read_atom reader))))
+       (if (nil? (tok :tok)) (error 'EOF))
+       (match tok
+              {:type :comment} (:next reader)
+              {:type :open-paren} (read_list reader)
+              (read_atom reader))
+       ))
 
 (defn read_str [s]
   (def reader (-> s tokenize make-reader))
