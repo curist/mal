@@ -30,6 +30,11 @@
   (default tag pat)
   ~(<- (* ,pat (constant ,tag))))
 
+(def reserved-words
+  ["true"
+   "false"
+   "nil"])
+
 (def mal-token
   ~{:whitespace (set " \t\n\r")
     :dontcare (+ :whitespace ",")
@@ -41,6 +46,7 @@
                              (if-not (set "\\\"") 1)))
                      (? "\""))
     :comment (* ";" (any 1))
+    :reserved (+ ,;reserved-words)
     :common (any (if-not (+ (set "[]{}('\"`,;)")
                             :whitespace)
                    1))
@@ -50,6 +56,7 @@
                       ,(t :special-single)
                       ,(t :maybe-string)
                       ,(t :comment)
+                      ,(t :reserved)
                       ,(t :common)
                       )))
     :main (any :value)
