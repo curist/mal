@@ -4,11 +4,10 @@
     :next (fn [self]
             (def t (:peek self))
             (if (nil? (t :tok)) (error "no more tokens"))
-            (update self :pos |(+ $ 2))
+            (update self :pos inc)
             t)
     :peek (fn [self]
-            {:type (get-in self [:tokens (self :pos)])
-             :tok (get-in self [:tokens (inc (self :pos))])})})
+            (get-in self [:tokens (self :pos)]))})
 
 # [\s,]*(~@|[\[\]{}()'`~^@]|"(?:\\.|[^\\"])*"?|;.*|[^\s\[\]{}('"`,;)]*)
 
@@ -68,7 +67,10 @@
   (table/setproto @{:tokens tokens} Reader))
 
 (defn tokenize [s]
-  (peg/match mal-grammer s))
+  # peg matched tokens = [ :type1 :tok1 :type2 :tok2 ... ]
+  (->> (peg/match mal-grammer s)
+       (partition 2)
+       (map |{:type ($ 0) :tok ($ 1)})))
 
 (var read_form nil)
 

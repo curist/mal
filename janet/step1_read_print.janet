@@ -10,11 +10,10 @@
       EVAL
       PRINT))
 
-(defn main []
+(defn main [_]
   (while true
     (:write stdout "user> ")
     (def line (:read stdin :line))
     (if (nil? line) (break))
     (print (rep line))))
 
-(main)
