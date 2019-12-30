@@ -1,4 +1,4 @@
-(use ./reader ./printer)
+(use ./core/reader ./core/printer)
 
 (defn READ [s] (read_str s))
 (defn EVAL [s] s)
