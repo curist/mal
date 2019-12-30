@@ -32,6 +32,7 @@
               {:type :list} (pr_list mal-data)
               {:type :quote} (pr_quote mal-data)
               {:type :meta} (pr_meta mal-data)
+              {:type :fn} "#<function>"
               {:type :comment} ""
               {:type :nil} "nil"
               (error mal-data))
