@@ -9,4 +9,4 @@ step: test
 	make step T=$$(( $(T) + 1 ))
 
 dev:
-	ls | entr -c make
+	ls **/* | entr -c make
