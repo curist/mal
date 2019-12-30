@@ -48,6 +48,12 @@
                      (reduce (fn [_ mal-exp]
                                (EVAL mal-exp env))
                              nil exprs))
+              "if" (let [[_ {:value truthy} true-expr false-expr] (ast :value)]
+                     (if (= "true" truthy)
+                       (break (EVAL true-expr env)))
+                     (if (nil? false-expr)
+                       nil
+                       (EVAL false-expr env)))
 
               # invoke as normal function
               (do
