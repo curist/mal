@@ -1,4 +1,4 @@
-(def Reader
+(def- Reader
   @{:tokens @[]
     :pos 0
     :next (fn [self]
@@ -23,18 +23,18 @@
 #
 # [^\s\[\]{}('"`,;)]*: Captures a sequence of zero or more non special characters (e.g. symbols, numbers, "true", "false", and "nil") and is sort of the inverse of the one above that captures special characters (tokenized).
 
-(defn t
+(defn- t
   "capture and tag a pattern"
   [pat &opt tag]
   (default tag pat)
   ~(<- (* ,pat (constant ,tag))))
 
-(def reserved-words
+(def- reserved-words
   ["true"
    "false"
    "nil"])
 
-(def mal-token
+(def- mal-token
   ~{:whitespace (set " \t\n\r")
     :dontcare (+ :whitespace ",")
     :special-double (* "~@")
@@ -61,12 +61,12 @@
     :main (any :value)
     })
 
-(def mal-grammer (peg/compile mal-token))
+(def- mal-grammer (peg/compile mal-token))
 
-(defn make-reader [tokens]
+(defn- make-reader [tokens]
   (table/setproto @{:tokens tokens} Reader))
 
-(defn tokenize [s]
+(defn- tokenize [s]
   # peg matched tokens = [ :type1 :tok1 :type2 :tok2 ... ]
   (->> (peg/match mal-grammer s)
        (partition 2)
@@ -74,31 +74,34 @@
 
 (var read_form nil)
 
-(def parens
+(def- paren-pairs
   {"(" ")"
    "[" "]"
    "{" "}"})
 
-(defn read_list [reader]
+(defn- read_list [reader]
   (def result @[])
   (def t (:next reader))
-  (def p (parens (t :tok)))
-  (loop [t :iterate (read_form reader) :until (= p t)]
+  (def p (paren-pairs (t :tok)))
+  (loop [t :iterate (read_form reader) :until (= p (t :value))]
     (array/push result t))
-  {:type (case p
+  {:type :list
+   :kind (case p
            ")" :list
            "]" :vector
            "}" :hash-map)
    :value result})
 
-(defn read_atom [reader]
+(defn- read_atom [reader]
   (def t (:next reader))
-  (t :tok))
+  {:type :atom
+   :kind (t :type)
+   :value (t :tok)})
 
 (set read_form
      (fn read_form [reader]
        (def tok (:peek reader))
-       (if (nil? (tok :tok)) (error 'EOF))
+       (if (nil? tok) (error {:type :error :kind :EOF}))
        (match tok
               {:type :comment} (:next reader)
               {:type :open-paren} (read_list reader)
@@ -107,8 +110,6 @@
 
 (defn read_str [s]
   (def reader (-> s tokenize make-reader))
-  (try
-    (read_form reader)
-    ([err] err)))
+  (read_form reader))
 
 

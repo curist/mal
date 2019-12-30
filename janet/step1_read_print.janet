@@ -5,15 +5,18 @@
 (defn PRINT [s] (pr_str s))
 
 (defn rep [line]
-  (-> line
-      READ
-      EVAL
-      PRINT))
+  (try
+    (-> line READ EVAL PRINT)
+    ([err]
+     (match err
+            {:type :error} (print (err :kind))
+            (error err)))))
 
 (defn main [_]
   (while true
     (:write stdout "user> ")
     (def line (:read stdin :line))
     (if (nil? line) (break))
-    (print (rep line))))
+    (def resp (rep line))
+    (if-not (nil? resp) (print resp))))
 
