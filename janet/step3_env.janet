@@ -34,7 +34,16 @@
               "def!" (let [[_ malk malv] (ast :value)
                            v (EVAL malv env)]
                        (:set env (malk :value) v))
-              "let*" (do (pp ast) ast)
+              "let*" (let [env* (env/make-mal-env env)
+                           mal-bindings (get-in ast [:value 1 :value])
+                           mal-exp (get-in ast [:value 2])]
+                       (if-not (even? (length mal-bindings))
+                         (error {:type :error
+                                 :message "let* bindings should be in pairs"}))
+                       (loop [[malk malv] :in (partition 2 mal-bindings)]
+                         (def v (EVAL malv env*))
+                         (:set env* (malk :value) v))
+                       (EVAL mal-exp env*))
 
               # invoke as normal function
               (do

@@ -17,4 +17,4 @@
 
 (defn make-mal-env [&opt outer]
   (default outer nil)
-  (table/setproto @{:outer outer} Env))
+  (table/setproto @{:outer outer :data @{}} Env))
