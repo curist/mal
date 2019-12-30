@@ -92,6 +92,13 @@
            "}" :hash-map)
    :value result})
 
+(defn- read_meta [reader]
+  (def meta (read_form reader))
+  (def data (read_form reader))
+  {:type :meta
+   :meta meta
+   :value data})
+
 (defn- read_single_special [reader]
   (def t (:next reader))
   (def quote-types
@@ -99,7 +106,9 @@
      "`" :quasiquote
      "~" :unquote
      "@" :deref})
-  (def quote-type (quote-types (take 1 (t :tok))))
+  (def c (take 1 (t :tok)))
+  (if (= c "^") (break (read_meta reader)))
+  (def quote-type (quote-types c))
   (if (nil? quote-type) (break))
   {:type :quote
    :kind quote-type
