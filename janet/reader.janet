@@ -94,11 +94,16 @@
 
 (defn- read_single_special [reader]
   (def t (:next reader))
-  (match (take 1 (t :tok))
-         "'" {:type :quote
-              :kind :quote
-              :value (read_form reader)}
-         ))
+  (def quote-types
+    {"'" :quote
+     "`" :quasiquote
+     "~" :unquote
+     "@" :deref})
+  (def quote-type (quote-types (take 1 (t :tok))))
+  (if (nil? quote-type) (break))
+  {:type :quote
+   :kind quote-type
+   :value (read_form reader)})
 
 (defn- read_double_special [reader])
 
