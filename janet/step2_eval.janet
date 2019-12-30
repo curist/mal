@@ -15,7 +15,9 @@
          :vector {:type :list
                   :kind :vector
                   :value (map |(EVAL $ env) (ast :value))}
-         :hash-map ast
+         :hash-map {:type :list
+                    :kind :hash-map
+                    :value (map |(EVAL $ env) (ast :value))}
          :number {:type :atom :value (scan-number (ast :value))}
          ast
          ))
@@ -24,7 +26,7 @@
      (fn EVAL [ast env]
        (if-not (= :list (ast :type))
          (break (eval_ast ast env)))
-       (if (empty? (ast :value)) (break nil))
+       (if (empty? (ast :value)) (break ast))
        (def result (eval_ast ast env))
        (if-not (= :list (ast :kind))
          (break result))
