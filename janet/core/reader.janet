@@ -46,7 +46,7 @@
                      (? "\""))
     :comment (* ";" (any 1))
     :reserved (+ ,;reserved-words)
-    :number (some (range "09"))
+    :number (* (? "-") (some (range "09")))
     :symbol (any (if-not (+ (set "[]{}('\"`,;)")
                             :whitespace)
                    1))
