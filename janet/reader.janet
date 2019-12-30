@@ -105,7 +105,11 @@
    :kind quote-type
    :value (read_form reader)})
 
-(defn- read_double_special [reader])
+(defn- read_double_special [reader]
+  (def t (:next reader))
+  {:type :quote
+   :kind :splice-unquote
+   :value (read_form reader)})
 
 (defn- read_atom [reader]
   (def t (:next reader))
