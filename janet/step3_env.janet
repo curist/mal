@@ -1,10 +1,11 @@
 (use ./core/reader ./core/printer)
+(import ./core/env :as env)
 
 (defn READ [s] (read_str s))
 (var EVAL nil)
 (defn eval_ast [ast env]
   (match (ast :kind)
-         :symbol (let [sym (get env (ast :value))]
+         :symbol (let [sym (:get env (ast :value))]
                    (if-not (nil? sym)
                      (break sym))
                    (error
@@ -26,13 +27,26 @@
        (if-not (= :list (ast :type))
          (break (eval_ast ast env)))
        (if (empty? (ast :value)) (break ast))
-       (def result (eval_ast ast env))
        (if-not (= :list (ast :kind))
-         (break result))
-       (def f ((first result) :value))
-       (def args (map |($ :value) (drop 1 result)))
-       {:type :atom
-        :value (apply f args)}))
+         (break (eval_ast ast env)))
+
+       (match (get-in ast [:value 0 :value])
+              "def!" (let [[_ malk malv] (ast :value)
+                           v (EVAL malv env)]
+                       (:set env (malk :value) v))
+              "let*" (do (pp ast) ast)
+
+              # invoke as normal function
+              (do
+                (def result (eval_ast ast env))
+                (def maybe-fn (first result))
+                (if-not (= :fn (maybe-fn :type))
+                  (error {:type :error
+                          :message (string (maybe-fn :value) " is not invokable")}))
+                (def f (maybe-fn :value))
+                (def args (map |($ :value) (drop 1 result)))
+                {:type :atom
+                 :value (apply f args)}))))
 
 (defn PRINT [exp] (pr_str exp))
 
@@ -47,12 +61,12 @@
             (error err)))))
 
 (defn make-repl []
-  (def repl-env
-    @{"+" {:type :fn :value +}
-      "-" {:type :fn :value -}
-      "*" {:type :fn :value *}
-      "/" {:type :fn :value (fn [a b] (math/floor (/ a b)))}
-      })
+  (def repl-env (env/make-mal-env))
+
+  (:set repl-env "+" {:type :fn :value +})
+  (:set repl-env "-" {:type :fn :value -})
+  (:set repl-env "*" {:type :fn :value *})
+  (:set repl-env "/" {:type :fn :value (fn [a b] (math/floor (/ a b)))})
 
   (while true
     (:write stdout "user> ")
