@@ -17,11 +17,15 @@
                                  (error {:type :error :kind :EOF}))
          (string val)))
 
+(defn- pr_quote [mal-data]
+  (string "(" (mal-data :kind) " " (pr_str (mal-data :value)) ")"))
+
 (set pr_str
      (fn [mal-data]
        (match mal-data
               {:type :atom} (pr_atom mal-data)
               {:type :list} (pr_list mal-data)
+              {:type :quote} (pr_quote mal-data)
               {:type :comment} ""
               {:type :nil} "nil"
               (error mal-data))

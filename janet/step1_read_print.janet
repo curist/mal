@@ -10,6 +10,8 @@
     ([err]
      (match err
             {:type :error} (print (err :kind))
+            {:type t} (print "unknown type " t)
+            nil (print "unexpected nil error")
             (error err)))))
 
 (defn main [_]

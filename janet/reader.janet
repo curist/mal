@@ -92,6 +92,16 @@
            "}" :hash-map)
    :value result})
 
+(defn- read_single_special [reader]
+  (def t (:next reader))
+  (match (take 1 (t :tok))
+         "'" {:type :quote
+              :kind :quote
+              :value (read_form reader)}
+         ))
+
+(defn- read_double_special [reader])
+
 (defn- read_atom [reader]
   (def t (:next reader))
   {:type :atom
@@ -105,6 +115,8 @@
        (match tok
               {:type :comment} (:next reader)
               {:type :open-paren} (read_list reader)
+              {:type :special-single} (read_single_special reader)
+              {:type :special-double} (read_double_special reader)
               (read_atom reader))
        ))
 
